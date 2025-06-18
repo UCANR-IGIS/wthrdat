@@ -1,0 +1,30 @@
+Package: wthrdat
+Title: Import Weather Station Data from APIs
+Version: 0.0.0.9000
+Date: 2025-06-18
+Authors@R: c(
+    person("Andy", "Lyons", , "andlyons@ucanr.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-7505-6709")),
+    person("Regents of the University of California", role = "cph")
+  )
+Description: Provides a standardized set of functions to retrieve data from weather station networks.
+License: MIT + file LICENSE
+URL: NA
+BugReports: NA
+Depends: 
+    R (>= 4.1.0)
+Imports: 
+    httr2,
+    lubridate,
+    purrr,
+    rlang,
+    stringr,
+    tibble,
+    tidyr,
+    units,
+    cli, 
+    dplyr
+Encoding: UTF-8
+LazyData: TRUE
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
