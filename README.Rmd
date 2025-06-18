@@ -24,10 +24,10 @@ In its current state, `wthrdat` supports downloading time series data for specif
 
 ## Installation
 
-You can install the development version of `wthrdat` like so:
+You can install the development version of `wthrdat` with:
 
-``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+```
+remotes::install_github("ucanr-igis/wthrdat")
 ```
 
 ## Example

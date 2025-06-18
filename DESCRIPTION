@@ -9,8 +9,8 @@ Authors@R: c(
   )
 Description: Provides a standardized set of functions to retrieve data from weather station networks.
 License: MIT + file LICENSE
-URL: NA
-BugReports: NA
+URL: https://github.com/ucanr-igis/wthrdat/
+BugReports: https://github.com/ucanr-igis/wthrdat/issues/
 Depends: 
     R (>= 4.1.0)
 Imports: 

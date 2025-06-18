@@ -22,11 +22,9 @@ into R’ below).
 
 ## Installation
 
-You can install the development version of `wthrdat` like so:
+You can install the development version of `wthrdat` with:
 
-``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
-```
+    remotes::install_github("ucanr-igis/wthrdat")
 
 ## Example
 
@@ -38,7 +36,7 @@ Start by defining the parameters for the request:
 ``` r
 library(wthrdat)
 #> wthrdat (version 0.0.0.9000)
-#> Bug reports: NA
+#> Bug reports: https://github.com/ucanr-igis/wthrdat/issues/
 weather_vars <- c("pr", "eto", "tair")
 stn_id <- "CI152"
 start_dt <- lubridate::ymd_hm("2025-04-01 00:00", tz = "America/Los_Angeles")
@@ -63,7 +61,7 @@ camarillo_tbl <- wd_getdata(src = "syn",
                             key = syn_key,
                             units = "imperial")
 #> ✔ Downloaded networks from Synoptic
-#> ℹ Downloading weather data from Synoptic✔ Downloading weather data from Synoptic [78ms]
+#> ℹ Downloading weather data from Synoptic✔ Downloading weather data from Synoptic [87ms]
 #> ✔ Parsed data for station CI152
 dim(camarillo_tbl)
 #> [1] 2151    7
