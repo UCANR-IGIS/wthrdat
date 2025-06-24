@@ -5,8 +5,13 @@
 #' @param end_dt End date-time
 #' @param var Standardized weather variables
 #' @param per Period / interval (minutes)
+#' @param units Units desired (imperial or metric)
 #' @param key API key
 #' @param tz Time Zone for the results
+#' @param cache_dir Directory for caching
+#' @param session Shiny session (for showing a spinner)
+#' @param spinner Show a spinner when fetching data,logical
+#' @param quiet Suppress messages
 #'
 #' @details
 #' This will query station data from the SynopticData API.
@@ -27,10 +32,11 @@
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
 #' @export
 
-
-wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone()) {
+wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone(),
+                           cache_dir = NULL, session = NULL, spinner = FALSE, quiet = FALSE) {
 
   # per is ignored with Synoptic (which doesn't support temporal resampling)
+  # cli_alert_info("TODO: error check the station names are valid")
 
   if (!inherits(start_dt, "POSIXct")) cli_abort("{.var start_dt} must be a POSIXct object")
   if (!inherits(end_dt, "POSIXct")) cli_abort("{.var end_dt} must be a POSIXct object")
@@ -41,16 +47,29 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
       cli_abort("{.var units} should be 'imperial' or 'metric'")
     }
   }
-  if (!is.null(per)) cli_alert_warning("{.var per} is not supported for Synoptic. Ignoring.")
   if (FALSE %in% (var %in% vars_tbl$var)) {
     cli_abort("Unknown variable(s): {paste(var[!var %in% vars_tbl$var], collapse = '', '')}")
   }
 
-  # cli_alert_info("TODO: error check the station names are valid")
-  # cli_alert_info("TODO: add units = imperial|metric")
+  use_cache <- !is.null(cache_dir)
+  if (use_cache) {
+    if (!dir.exists(cache_dir)) cli_abort("Can't find {.var cache_dir}")
+  }
+
+    if (!is.null(session) && spinner) {
+    if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
+  }
+
+  if (quiet) {
+    rlang::local_options(cli.default_handler = NULL)
+    options(cli.default_handler = NULL)
+  }
+
+  if (!is.null(per)) cli_alert_warning("{.var per} is not supported for Synoptic. Ignoring.")
 
   ## Initialize an object for the result
   src_chr <- "syn"
+  src_name <- "Synoptic"
   syn_baseurl <- "https://api.synopticdata.com"
 
   ## Construct a tibble that maps the standardized weather variable names to Synoptic API fields
@@ -75,43 +94,82 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   ## Get the Synoptic networks (n=375)
   syn_networks_tbl <- wd_getnetworks_syn(key, quiet = FALSE, cache = TRUE)
 
-  syn_data_req <- request(syn_baseurl) |>
-    req_url_path_append("v2/stations/timeseries") |>
-    req_url_query(token = key,
-                  stid = paste0(stid, collapse=","),
-                  vars = paste0(qry_flds, collapse = ","),
-                  varsoperator = "and",
-                  units = "metric",
-                  start = start_chr,
-                  end = end_chr,
-                  obtimezone = 'local')
+  if (use_cache) {
+    cache_base <- paste("wd_syn",
+                        paste0(stid, collapse="-"),
+                        start_chr,
+                        end_chr,
+                        paste0(var, collapse = "-"),
+                        "metric",
+                        sep = "_")
 
-  ## Perform the request
-  cli_progress_step("Downloading weather data from Synoptic")
-  syn_data_resp <- req_perform(syn_data_req)
-
-  ## Check that we have a valid response
-  if (resp_is_error(syn_data_resp)) {
-    cli_abort("The API request was not successful")
+    cache_fn <- file.path(cache_dir, paste0(cache_base, ".rds"))
+    cache_found_yn <- file.exists(cache_fn)
   } else {
-    cli_progress_done()
+    cache_fn <- NA
+    cache_found_yn <- FALSE
   }
 
-  # cli_alert_success("downloaded weather data from Synoptic")
+  if (use_cache && cache_found_yn) {
+    syn_data_lst <- readRDS(file = cache_fn)
+    cli_alert_success("Found cached data for {stid}")
 
-  # ## Convert the body to a list
-  syn_data_lst <- resp_body_json(syn_data_resp)
-  # View(syn_data_lst)
+  } else {
 
-  ## Check that the station was found
-  ## Better option: don't stop but record the error in the
-  ## list that gets returned (error = TRUE, err_msg = "")
-  ## TODO: improve the error message showing the name of the station(s) not found
-  if (syn_data_lst$SUMMARY$NUMBER_OF_OBJECTS != length(stid)) {
-    cli_abort(c("A station was not found"))
+    if (!is.null(session) && spinner) {
+      shinybusy::show_modal_spinner(
+        spin = "radar",
+        text = paste0("Getting data from ", src_name),
+        session = session
+      )
+    }
+
+    ## Create a request for all the stations at once
+    syn_data_req <- request(syn_baseurl) |>
+      req_url_path_append("v2/stations/timeseries") |>
+      req_url_query(token = key,
+                    stid = paste0(stid, collapse=","),
+                    vars = paste0(qry_flds, collapse = ","),
+                    varsoperator = "and",
+                    units = "metric",
+                    start = start_chr,
+                    end = end_chr,
+                    obtimezone = 'local')
+
+    ## Perform the request
+    cli_progress_step("Downloading weather data from Synoptic")
+    syn_data_resp <- req_perform(syn_data_req)
+
+    if (!is.null(session) && spinner) {
+      shinybusy::remove_modal_spinner(session = session)
+    }
+
+    ## Check that we have a valid response
+    if (resp_is_error(syn_data_resp)) {
+      cli_abort("The API request was not successful")
+    } else {
+      cli_progress_done()
+    }
+
+    # ## Convert the body to a list
+    syn_data_lst <- resp_body_json(syn_data_resp)
+    # View(syn_data_lst)
+
+    ## Check that the station was found
+    ## Better option: don't stop but record the error in the
+    ## list that gets returned (error = TRUE, err_msg = "")
+    ## TODO: improve the error message showing the name of the station(s) not found
+    if (syn_data_lst$SUMMARY$NUMBER_OF_OBJECTS != length(stid)) {
+      cli_abort(c("A station was not found"))
+    }
+
+    ## TODO: verify we got all the vars/fields we asked for
+
+    if (use_cache) {
+      saveRDS(syn_data_lst, file = cache_fn)
+    }
+
   }
-
-  ## TODO: verify we got all the vars/fields we asked for
 
   ## Get the network for these stations
   stid_coords_network_tbl <- tibble(station = syn_data_lst$STATION) |>
@@ -136,13 +194,14 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   ## Create a tibble of the variables that need unit conversion
   if (is.null(units)) {
     var_units_target_tbl <- tibble(NULL)
+    units_chr <- "default"
   } else {
     var_units_target_tbl <- fld_key_var_tbl |>
       left_join(units_conv_tbl |> select(units, units_target := !!units), by = "units") |>
       filter(units != units_target) |>
       select(var, units, units_target)
+    units_chr <- units
   }
-
 
   ## TODO: Compare the actual units with the expected units ??
   #  syn_data_lst$UNITS[names(keys_chr)]   "Milimeters"
@@ -156,9 +215,8 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   res_tbl <- NULL
   meta_tbl <- NULL
 
-  ## Loop through the stations
+  ## Loop through the stations in syn_data_lst
   # stn_idx <- 1
-
   for (stn_idx in 1:length(syn_data_lst$STATION)) {
 
     this_stid <- syn_data_lst$STATION[[stn_idx]]$STID
@@ -204,13 +262,14 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
     ## Append these rows to res_tbl
     res_tbl <- rbind(res_tbl, obs_thisstid_tbl)
 
-    ## Append one row of metadata
+    ## Append one row of metadata for this station
     meta_tbl  <- rbind(meta_tbl, tibble(
       stid = this_stid,
       start_req_dt = start_dt,
       end_req_dt = end_dt,
       start_rec_dt = min(syn_data_dt),        ## actual received
-      end_rec_dt = max(syn_data_dt)
+      end_rec_dt = max(syn_data_dt),
+      cache_copy = cache_found_yn
     ))
 
     cli_alert_success("Parsed data for station {.field {this_stid}}")
@@ -235,12 +294,16 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   ## Prepend class "wthr_df"
   class(res_tbl) <- c("wthr_tbl", class(res_tbl))
 
-  ## Return the result
+  ## Return a tibble with columns: src, network, stid, dt, var, val, units
   res_tbl
 
 }
 
-#' Get Syntopic networks
+#' Get Synoptic networks
+#' @param key API key
+#' @param cache Cache results
+#' @param quiet Suppress messages
+#'
 #' @import httr2 tidyr dplyr
 #' @importFrom cli cli_alert_success
 #' @export

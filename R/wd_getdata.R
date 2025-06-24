@@ -6,8 +6,13 @@
 #' @param end_dt End date-time
 #' @param var Standardized weather variables
 #' @param per Period / interval (minutes)
+#' @param units Units desired (imperial or metric)
 #' @param key API key
 #' @param tz Time Zone for the results
+#' @param cache_dir Directory for caching
+#' @param session Shiny session (for showing a spinner)
+#' @param spinner Show a spinner when fetching data,logical
+#' @param quiet Suppress messages
 #'
 #' @details
 #' This will query station data from different APIs.
@@ -17,11 +22,11 @@
 #' @seealso \code{\link{wd_getdata_syn}}, \code{\link{wd_getdata_wwg}}
 #'#'
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
-#' @importFrom rlang arg_match
+#' @importFrom rlang local_options
 #' @export
 
-wd_getdata <- function(src = c("syn", "wwg")[1], stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone()) {
-
+wd_getdata <- function(src = c("syn", "wwg")[1], stid, start_dt, end_dt, var, key, per = NULL, units = NULL,
+                       tz = Sys.timezone(), cache_dir = NULL, session = NULL, spinner = FALSE, quiet = FALSE) {
 
   if (!inherits(start_dt, "POSIXct")) cli_abort("{.var start_dt} must be a POSIXct object")
   if (!inherits(end_dt, "POSIXct")) cli_abort("{.var end_dt} must be a POSIXct object")
@@ -45,11 +50,17 @@ wd_getdata <- function(src = c("syn", "wwg")[1], stid, start_dt, end_dt, var, ke
     cli_abort("Unknown variable(s): {paste(var[!var %in% vars_tbl$var], collapse = '', '')}")
   }
 
+  if (!is.null(session) && spinner) {
+    if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
+  }
+
   if (tolower(src) == "wwg") {
-    wd_getdata_wwg(stid = stid, start_dt = start_dt, end_dt = end_dt, var = var, per = per, units = units, key = key, tz = tz)
+    wd_getdata_wwg(stid = stid, start_dt = start_dt, end_dt = end_dt, var = var, per = per, units = units, key = key,
+                   tz = tz, cache_dir = cache_dir, session = session, spinner = spinner, quiet = quiet)
 
   } else if (tolower(src) == "syn") {
-    wd_getdata_syn(stid = stid, start_dt = start_dt, end_dt = end_dt, var = var, per = per, units = units, key = key, tz = tz)
+    wd_getdata_syn(stid = stid, start_dt = start_dt, end_dt = end_dt, var = var, per = per, units = units, key = key,
+                   tz = tz, cache_dir = cache_dir, session = session, spinner = spinner, quiet = quiet)
 
   }
 

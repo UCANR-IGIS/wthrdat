@@ -12,7 +12,11 @@ wd_getdata_syn(
   key,
   per = NULL,
   units = NULL,
-  tz = Sys.timezone()
+  tz = Sys.timezone(),
+  cache_dir = NULL,
+  session = NULL,
+  spinner = FALSE,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -28,7 +32,17 @@ wd_getdata_syn(
 
 \item{per}{Period / interval (minutes)}
 
+\item{units}{Units desired (imperial or metric)}
+
 \item{tz}{Time Zone for the results}
+
+\item{cache_dir}{Directory for caching}
+
+\item{session}{Shiny session (for showing a spinner)}
+
+\item{spinner}{Show a spinner when fetching data,logical}
+
+\item{quiet}{Suppress messages}
 }
 \value{
 A weather data tibble (long format)

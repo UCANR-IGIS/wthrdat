@@ -42,7 +42,6 @@ weather_vars <- c("pr", "eto", "tair")
 stn_id <- "CI152"
 start_dt <- lubridate::ymd_hm("2025-04-01 00:00", tz = "America/Los_Angeles")
 end_dt <- lubridate::ymd_hm("2025-04-30 23:59", tz = "America/Los_Angeles")
-syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
 ```
 
 \
@@ -50,8 +49,8 @@ syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
 Next we call `wd_getdata_syn()` which returns data in a long format:
 
 ```{r}
+## Retrieve my API key (saved as an environment variable - see below)
 syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
-syn_key
 
 camarillo_tbl <- wd_getdata(src = "syn",
                             stid = stn_id,
@@ -76,13 +75,14 @@ head(camarillo_wide_tbl)
 Functions you can use to download weather data include:
 
 ```
-wd_getdata_syn()    ## Synoptic
+wd_getdata()        ## Any supported API
+wd_getdata_syn()    ## Synoptic 
 wd_getdata_wwg()    ## Western Weather Group
 ```
 
 In the function document, please note that *source* refers to the API, while *network* refers to the weather station network. In many cases these will be the same as the source (e.g., the Western Weather Group API allows you to download data from stations in the Western Weather Group network). However other sources, like Synoptic, do not operate their own network of weather stations but are rather a data portal for multiple networks.
 
-To view a list of the standardized weather variables (that you can pass to `wd_getdata_syn()` and `wd_getdata_wwg()`), run:
+To view a list of the standardized weather variables (that you can pass to `wd_getdata()`), run:
 
 ```{r}
 wd_vars()
@@ -91,7 +91,8 @@ wd_vars()
 Note that not every network or station will have every variable. To see which variable is available for a specific source, run:
 
 ```{r}
-## Coming soon
+wd_srcs()
+## sources-vars coming soon...
 ```
 
 If a weather station you have access to includes a weather variable that is not supported in `wthrdat`, you unfortunately just can't add it yourself. Contact the package maintainer or start an issue on GitHub and we can try to add it.
@@ -140,12 +141,11 @@ SYNOPTIC_KEY = "a2cXXXxXXXXXXXXXXXXXXXXXcXXXXde8"
 
 After restarting R, you can bring it into your code as follow:
 
-```{r}
+```
 my_api_key <- Sys.getenv("SYNOPTIC_KEY")
 ```
 
-Tip: If you save your API keys as environment variables as shown above, and are building a Shiny app to host on ShinyApps.io, be sure to include the 'environment variables' box when you publish the app.
-
+Tip: If you save your API keys as environment variables as shown above, and are publishing your Shiny app on ShinyApps.io, be sure to include the 'environment variables' box when you publish the app.
 
 ## Other Ways to Get Weather Data in R
 

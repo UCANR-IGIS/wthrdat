@@ -1,7 +1,7 @@
 Package: wthrdat
 Title: Import Weather Station Data from APIs
-Version: 0.0.0.9000
-Date: 2025-06-18
+Version: 0.1.6
+Date: 2025-06-24
 Authors@R: c(
     person("Andy", "Lyons", , "andlyons@ucanr.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7505-6709")),
@@ -24,6 +24,8 @@ Imports:
     units,
     cli, 
     dplyr
+Suggests:
+    shinybusy
 Encoding: UTF-8
 LazyData: TRUE
 Roxygen: list(markdown = TRUE)

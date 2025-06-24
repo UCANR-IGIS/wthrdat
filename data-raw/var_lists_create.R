@@ -3,13 +3,17 @@
 
 library(readxl)
 
-vars_tbl <- read_xlsx(here::here("data-raw/var_map.xlsx"), sheet = "vars")
+wthrdat_vars_fn <- here::here("data-raw/wthrdat_vars.xlsx")
+if (!file.exists(wthrdat_vars_fn)) stop(paste0("Can not find ", wthrdat_vars_fn))
 
-src_var_tbl <- read_xlsx(here::here("data-raw/var_map.xlsx"),
-                         sheet = "src_var",
+vars_tbl <- read_xlsx(wthrdat_vars_fn, sheet = "vars")
+
+src_var_tbl <- read_xlsx(wthrdat_vars_fn, sheet = "src_var",
                          col_types = c("text", "text", "numeric", "text", "text", "text"))
 
-units_conv_tbl <- read_xlsx(here::here("data-raw/var_map.xlsx"), sheet = "units_conv")
+units_conv_tbl <- read_xlsx(wthrdat_vars_fn, sheet = "units_conv")
+
+srcs_tbl <- read_xlsx(wthrdat_vars_fn, sheet = "srcs")
 
 ## Do some checks for duplicate combos
 if (anyDuplicated(src_var_tbl[, c("src", "per", "var")])) stop("Found duplicate rows for src, per, and var")
@@ -18,7 +22,7 @@ if (anyDuplicated(src_var_tbl[, c("src", "per", "var", "units")])) stop("Found d
 if (anyDuplicated(src_var_tbl[, c("src", "per", "fld")])) stop("Found duplicate rows for src, per, and fld")
 if (anyDuplicated(src_var_tbl[, c("src", "per", "fld", "units")])) stop("Found duplicate rows for src, per, fld, and units")
 
-if (anyDuplicated(units_conv_tbl$unit)) stop("Found duplicate units in units_conv")
+if (anyDuplicated(units_conv_tbl$units)) stop("Found duplicate units in units_conv")
 
 cat("TODO: check that units are all imperial or all metric. Stop if not.")
 
@@ -33,7 +37,7 @@ if (FALSE %in% (all_units_chr %in% valid_units_chr)) {
              paste(all_units_chr[!all_units_chr %in% valid_units_chr], collapse = ", ")))
 }
 
-usethis::use_data(vars_tbl, src_var_tbl, units_conv_tbl, overwrite = TRUE, internal = TRUE)
+usethis::use_data(vars_tbl, src_var_tbl, units_conv_tbl, srcs_tbl, overwrite = TRUE, internal = TRUE)
 
 
 # wthr_vars <- list(
