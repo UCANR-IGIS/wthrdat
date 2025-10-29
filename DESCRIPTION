@@ -1,6 +1,6 @@
 Package: wthrdat
 Title: Import Weather Station Data from APIs
-Version: 0.1.7
+Version: 0.1.8
 Date: 2025-10-28
 Authors@R: c(
     person("Andy", "Lyons", , "andlyons@ucanr.edu", role = c("aut", "cre"),

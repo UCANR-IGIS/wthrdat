@@ -30,7 +30,8 @@
 #' @importFrom lubridate with_tz ymd_hms
 #' @importFrom units set_units
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
-#' @importFrom purrr modify_if
+#' @importFrom purrr modify_if list_rbind
+#' @importFrom rlang set_names
 #' @export
 
 wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone(),
