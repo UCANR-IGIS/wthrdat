@@ -21,8 +21,9 @@
 #'
 #' @returns A weather data tibble (long format)
 #'
-#' @import httr2 tidyr dplyr purrr tibble
+#' @import httr2 tidyr dplyr tibble
 #' @importFrom lubridate ymd_hms
+#' @importFrom purrr map map_chr
 #' @importFrom stringr str_replace
 #' @importFrom units set_units
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
@@ -59,6 +60,10 @@ wd_getdata_wwg <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   use_cache <- !is.null(cache_dir)
   if (use_cache) {
     if (!dir.exists(cache_dir)) cli_abort("Can't find {.var cache_dir}")
+  }
+
+  if (!is.null(session) && spinner) {
+    if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
   }
 
   if (quiet) {

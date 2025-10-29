@@ -26,10 +26,11 @@
 #'
 #' @returns A weather data tibble (long format)
 #'
-#' @import httr2 tidyr dplyr purrr tibble
+#' @import httr2 tidyr dplyr tibble
 #' @importFrom lubridate with_tz ymd_hms
 #' @importFrom units set_units
 #' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
+#' @importFrom purrr modify_if
 #' @export
 
 wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone(),
@@ -56,7 +57,7 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
     if (!dir.exists(cache_dir)) cli_abort("Can't find {.var cache_dir}")
   }
 
-    if (!is.null(session) && spinner) {
+  if (!is.null(session) && spinner) {
     if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
   }
 
@@ -233,7 +234,7 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
       tibble(
         dt = syn_data_dt,
         var = key_var_lst[[key]],
-        val = unlist(syn_data_lst$STATION[[stn_idx]]$OBSERVATIONS[[key]]),
+        val = unlist(modify_if(syn_data_lst$STATION[[stn_idx]]$OBSERVATIONS[[key]], is.null, ~NA)),
         units = key_units_lst[[key]]
       ))
 
