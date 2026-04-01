@@ -12,19 +12,55 @@ from multiple weather station providers. `wthrdat` has specifically been
 written to support agricultural decision support tools and research that
 requires real-time weather data from multiple networks.
 
-In its current state, `wthrdat` supports downloading time series data
-for specific stations for a pair of date-times. Weather APIs can do a
-lot more than that, such as help you discover new stations or get info
-about the health of a station, but those functions are not supported. To
-use `wthrdat`, you need to know which stations you want, and have access
-to them via an API key (see also ‘Other Ways to Download Weather Data
-into R’ below).
+`wthrdat` supports downloading time series data for specific stations
+for a pair of date-times. `wthrdat` currently has support for the
+[Synoptic](https://synopticdata.com/) and [Western Weather
+Group](https://www.westernweathergroup.com/) APIs. Both of these APIs
+require a key. Only a subset of weather variables are currently
+supported (precipitation, reference evapotranspiration, and air
+temperature.
+
+To use `wthrdat`, you need to know which stations you want, and have
+access to them via an API key. For sources of ‘free’ weather data, see
+‘Other Ways to Download Weather Data into R’ below.
+
+Weather APIs can do a lot more than download station data. For example
+many weather API can help you discover new stations or get info about
+the health of a station. These kinds of functions are not supported.
 
 ## Installation
 
 You can install the development version of `wthrdat` with:
 
     remotes::install_github("ucanr-igis/wthrdat")
+
+View the weather providers supported:
+
+``` r
+library(wthrdat)
+#> wthrdat (version 0.1.9)
+#> Bug reports: https://github.com/ucanr-igis/wthrdat/issues/
+wd_srcs()
+#> # A tibble: 2 × 3
+#>   src   name                  docs                                   
+#>   <chr> <chr>                 <chr>                                  
+#> 1 wwg   Western Weather Group https://api.westernwx.com/docs/        
+#> 2 syn   Synoptic              https://docs.synopticdata.com/services/
+```
+
+View the subset of standardized weather variables currently supported:
+
+``` r
+wd_vars()
+#> # A tibble: 5 × 2
+#>   var      desc                              
+#>   <chr>    <chr>                             
+#> 1 eto      reference evapotransiration       
+#> 2 pr       precipitation                     
+#> 3 tair     air temperature at 2m             
+#> 4 tair_max max air temperature for the period
+#> 5 tair_min min air temperature for the period
+```
 
 ## Example
 
@@ -34,14 +70,10 @@ a CIMIS station in Ventura County, CA.
 Start by defining the parameters for the request:
 
 ``` r
-library(wthrdat)
-#> wthrdat (version 0.0.0.9000)
-#> Bug reports: https://github.com/ucanr-igis/wthrdat/issues/
 weather_vars <- c("pr", "eto", "tair")
 stn_id <- "CI152"
 start_dt <- lubridate::ymd_hm("2025-04-01 00:00", tz = "America/Los_Angeles")
 end_dt <- lubridate::ymd_hm("2025-04-30 23:59", tz = "America/Los_Angeles")
-syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
 ```
 
   
@@ -49,9 +81,8 @@ syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
 Next we call `wd_getdata_syn()` which returns data in a long format:
 
 ``` r
+## Retrieve my API key (saved as an environment variable - see below)
 syn_key <- Sys.getenv("MY_SYNOPTIC_PUBLIC_TOKEN")
-syn_key
-#> [1] "91b8e95d3af4443aa981b43d25be7e06"
 
 camarillo_tbl <- wd_getdata(src = "syn",
                             stid = stn_id,
@@ -60,21 +91,24 @@ camarillo_tbl <- wd_getdata(src = "syn",
                             var = weather_vars,
                             key = syn_key,
                             units = "imperial")
+#> THIS SESSION IS INTERACTIVE: FALSE
+#> SESSION IS NULL: TRUE
+#> SETTING COLORS TO 1
 #> ✔ Downloaded networks from Synoptic
-#> ℹ Downloading weather data from Synoptic✔ Downloading weather data from Synoptic [87ms]
+#> ℹ Calling Synoptic API✔ Calling Synoptic API [85ms]
 #> ✔ Parsed data for station CI152
 dim(camarillo_tbl)
-#> [1] 2151    7
+#> [1] 2106    7
 head(camarillo_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                  var     val units
 #>   <fct> <fct>   <fct> <dttm>              <fct> <dbl> <fct>
-#> 1 syn   CIMIS   CI152 2025-04-01 00:00:00 tair   53.7 degF 
-#> 2 syn   CIMIS   CI152 2025-04-01 01:00:00 tair   53.8 degF 
-#> 3 syn   CIMIS   CI152 2025-04-01 02:00:00 tair   53.6 degF 
-#> 4 syn   CIMIS   CI152 2025-04-01 03:00:00 tair   53.3 degF 
-#> 5 syn   CIMIS   CI152 2025-04-01 04:00:00 tair   51.6 degF 
-#> 6 syn   CIMIS   CI152 2025-04-01 05:00:00 tair   47.3 degF
+#> 1 syn   CIMIS   CI152 2025-04-01 15:00:00 tair   61.5 degF 
+#> 2 syn   CIMIS   CI152 2025-04-01 16:00:00 tair   60.2 degF 
+#> 3 syn   CIMIS   CI152 2025-04-01 17:00:00 tair   58.3 degF 
+#> 4 syn   CIMIS   CI152 2025-04-01 18:00:00 tair   57.1 degF 
+#> 5 syn   CIMIS   CI152 2025-04-01 19:00:00 tair   56.2 degF 
+#> 6 syn   CIMIS   CI152 2025-04-01 20:00:00 tair   55.4 degF
 ```
 
 To work with the variables in individual columns, we need to transform
@@ -86,31 +120,32 @@ head(camarillo_wide_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                    tair   pr  eto
 #>   <fct> <fct>   <fct> <dttm>              [degF] [in] [in]
-#> 1 syn   CIMIS   CI152 2025-04-01 00:00:00   53.7    0    0
-#> 2 syn   CIMIS   CI152 2025-04-01 01:00:00   53.8    0    0
-#> 3 syn   CIMIS   CI152 2025-04-01 02:00:00   53.6    0    0
-#> 4 syn   CIMIS   CI152 2025-04-01 03:00:00   53.3    0    0
-#> 5 syn   CIMIS   CI152 2025-04-01 04:00:00   51.6    0    0
-#> 6 syn   CIMIS   CI152 2025-04-01 05:00:00   47.3    0    0
+#> 1 syn   CIMIS   CI152 2025-04-01 15:00:00   61.5    0 0.02
+#> 2 syn   CIMIS   CI152 2025-04-01 16:00:00   60.2    0 0.01
+#> 3 syn   CIMIS   CI152 2025-04-01 17:00:00   58.3    0 0   
+#> 4 syn   CIMIS   CI152 2025-04-01 18:00:00   57.1    0 0   
+#> 5 syn   CIMIS   CI152 2025-04-01 19:00:00   56.2    0 0   
+#> 6 syn   CIMIS   CI152 2025-04-01 20:00:00   55.4    0 0
 ```
 
 ## Some Notes on Querying Data
 
 Functions you can use to download weather data include:
 
-    wd_getdata_syn()    ## Synoptic
+    wd_getdata()        ## Any supported API
+    wd_getdata_syn()    ## Synoptic 
     wd_getdata_wwg()    ## Western Weather Group
 
-In the function document, please note that *source* refers to the API,
-while *network* refers to the weather station network. In many cases
-these will be the same as the source (e.g., the Western Weather Group
-API allows you to download data from stations in the Western Weather
-Group network). However other sources, like Synoptic, do not operate
-their own network of weather stations but are rather a data portal for
-multiple networks.
+When calling a download function, please note that *source* refers to
+the API, while *network* refers to the weather station network. In many
+cases these will be the same as the source (e.g., the Western Weather
+Group API allows you to download data from stations in the Western
+Weather Group network). However other sources, like Synoptic, do not
+operate their own network of weather stations but are rather a data
+portal for multiple networks.
 
 To view a list of the standardized weather variables (that you can pass
-to `wd_getdata_syn()` and `wd_getdata_wwg()`), run:
+to `wd_getdata()`), run:
 
 ``` r
 wd_vars()
@@ -128,7 +163,13 @@ Note that not every network or station will have every variable. To see
 which variable is available for a specific source, run:
 
 ``` r
-## Coming soon
+wd_srcs()
+#> # A tibble: 2 × 3
+#>   src   name                  docs                                   
+#>   <chr> <chr>                 <chr>                                  
+#> 1 wwg   Western Weather Group https://api.westernwx.com/docs/        
+#> 2 syn   Synoptic              https://docs.synopticdata.com/services/
+## sources-vars coming soon...
 ```
 
 If a weather station you have access to includes a weather variable that
@@ -193,13 +234,45 @@ Enter your API keys in `.Renviron` as follows:
 
 After restarting R, you can bring it into your code as follow:
 
-``` r
-my_api_key <- Sys.getenv("SYNOPTIC_KEY")
-```
+    my_api_key <- Sys.getenv("SYNOPTIC_KEY")
 
 Tip: If you save your API keys as environment variables as shown above,
-and are building a Shiny app to host on ShinyApps.io, be sure to include
+and are publishing your Shiny app on ShinyApps.io, be sure to include
 the ‘environment variables’ box when you publish the app.
+
+## Trapping Errors
+
+There are a dozen ways that an API call can fail. The API may be
+offline, a station may be offline, the API key might be expired,
+expected parameter values may have changed, etc.
+
+When an error occurs in `wd_getdata()` (and its dependent functions), it
+checks for the most common causes and tries to provide a helpful error
+message. If you’re working at the console or in a notebook, these error
+message will hopefully help you understand and come up with a way to fix
+the error.
+
+If on the other you’re calling `wd_getdata()` from a Shiny app (one of
+the main use cases for the package), you probably want to check for an
+error response so you can respond to it without having the app simply
+disconnect from the server. You can trap errors and present the error
+message to the user in your Shiny app using the `try()` function as
+illustrated below:
+
+    data_tbl <- wd_getdata(src = "syn",
+                     stid = c("CI052", "CI152"),
+                     start_dt = as.POSIXct("2026-03-18 13:00:00 PDT"),
+                     end_dt = as.POSIXct("2026-03-30 13:00:00 PDT"),
+                     var = c("eto", "pr"),
+                     key = "abcdefg",
+                     units = "imperial",
+                     tz = "America/Los_Angeles") |> try(silent = TRUE)
+
+    if (inherits(data_tbl, "try-error")) {
+      cat("An error occurred: ", attr(data_tbl, "condition")$message, "\n", sep = "")
+    } else {
+      head(data_tbl)
+    }
 
 ## Other Ways to Get Weather Data in R
 
@@ -212,4 +285,4 @@ specific providers via APIs. One way to find packages is to look at CRAN
 packages by name and search for the word ‘weather’ or the network you’re
 interested in.
 
-See also openmeteo.
+See also [`openmeteo`](https://cran.r-project.org/package=openmeteo).

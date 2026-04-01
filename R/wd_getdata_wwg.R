@@ -10,7 +10,7 @@
 #' @param tz Time Zone for the results
 #' @param cache_dir Directory for caching
 #' @param session Shiny session (for showing a spinner)
-#' @param spinner Show a spinner when fetching data,logical
+#' @param spinner Show a spinner when fetching data, logical
 #' @param quiet Suppress messages
 #'
 #' @details
@@ -19,14 +19,18 @@
 #'
 #' To use the WWG API, you must have an API key. If your account has API access, you can manage your API Keys from https://app.westernwx.com/apikeys. When you generate a new key, it will give you an Id, Secret, and a Key.
 #'
+#' If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
+#' does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
+
 #' @returns A weather data tibble (long format)
 #'
 #' @import httr2 tidyr dplyr tibble
-#' @importFrom lubridate ymd_hms
+#' @importFrom lubridate ymd_hms format_ISO8601
 #' @importFrom purrr map map_chr
 #' @importFrom stringr str_replace
 #' @importFrom units set_units
-#' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
+#' @importFrom rlang local_options
+#' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li qty
 #' @export
 
 wd_getdata_wwg <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone(),
@@ -38,44 +42,28 @@ wd_getdata_wwg <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
 
   # cli_alert_info("TODO: error check the station names are valid")
 
-  if (!inherits(start_dt, "POSIXct")) cli_abort("{.var start_dt} must be a POSIXct object")
-  if (!inherits(end_dt, "POSIXct")) cli_abort("{.var end_dt} must be a POSIXct object")
-  if (start_dt >= end_dt) cli_abort("{.var end_dt} must be later than {.var start_dt}")
+  ## Initialize an object for the result
+  src_chr <- "wwg"
+  src_name <- "Western Weather Group"
+  wwg_baseurl <- "https://api.westernwx.com"
+  network_chr <- "wwg"                         ## The WWG API only supports one network (WWG)
+
+  wd_getdata_checks(start_dt, end_dt, tz, src = src_chr, units, var, cache_dir, session, spinner)
 
   if (is.null(per)) cli_abort(c(
     "{.var per} is required for Western Weather Group",
     "i" = "Try 60. If that fails, ask your Western Weather Group support person for the time intervals supported on your account"))
-  if (!tz %in% OlsonNames()) cli_abort("{tz} is not a recognized timezone.")
-
-  if (!is.null(units)) {
-    if (!tolower(units) %in% c("imperial", "metric")) {
-      cli_abort("{.var units} should be 'imperial' or 'metric'")
-    }
-  }
-
-  if (FALSE %in% (var %in% vars_tbl$var)) {
-    cli_abort("Unknown variable(s): {paste(var[!var %in% vars_tbl$var], collapse = '', '')}")
-  }
 
   use_cache <- !is.null(cache_dir)
-  if (use_cache) {
-    if (!dir.exists(cache_dir)) cli_abort("Can't find {.var cache_dir}")
-  }
 
-  if (!is.null(session) && spinner) {
-    if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
-  }
-
+  ## If quiet, suppress all cli output (except of course errors)
+  ## rlang::local_options will reset the handler when the function terminates
   if (quiet) {
-    #rlang::local_options(cli.default_handler = function(msg) invisible(NULL))
-    rlang::local_options(cli.default_handler = NULL)
-    options(cli.default_handler = NULL)
+    rlang::local_options(cli.default_handler = function(...) invisible(NULL))
   }
 
-  src_chr <- "wwg"
-  src_name <- "Western Weather Group"
-  network_chr <- "wwg"
-  wwg_baseurl <- "https://api.westernwx.com"
+  ## Suppress ANSI escape codes from cli output if we're not in an interactive session
+  if (!interactive()) {rlang::local_options(cli.num_colors = 1L)}
 
   ## Construct a tibble that maps the standardized weather variable names to WWG API fields
   src_var_filt_tbl <- src_var_tbl |>
@@ -158,18 +146,33 @@ wd_getdata_wwg <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
                     accept = "application/json")
 
       ## Perform the request
-      cli_progress_step("Downloading weather data from WWG for station {.field {one_stid}}")
-      wwg_data_resp <- req_perform(wwg_data_req)
+      cli_progress_step("Calling {src_name} API for station {.field {one_stid}}")
+      wwg_data_resp <- req_perform(wwg_data_req) |> try(silent = TRUE)
 
+      ## Close the spinner
       if (!is.null(session) && spinner) {
         shinybusy::remove_modal_spinner(session = session)
       }
 
+      ## Trap authorization errors
+      if (inherits(wwg_data_resp, "try-error")) {
+        err_msg <- attr(wwg_data_resp, "condition")$message
+        if (grepl("unauthorized", err_msg, ignore.case = TRUE)) {
+          cli_abort("Invalid API key passed to {src_name}")
+        } else {
+          cli_abort("Error from {src_name}: {err_msg}")
+        }
+      }
+
       ## Check that we have a valid response
       if (resp_is_error(wwg_data_resp)) {
-        cli_abort("The API request was not successful")
+        cli_abort("The API call to {src_name} returned an error")
       } else {
         cli_progress_done()
+      }
+
+      if (!resp_has_body(wwg_data_resp)) {
+        cli_abort(c("No data returned from {src_name} for station {.field {one_stid}}"))
       }
 
       ## Convert the body to a list
@@ -242,7 +245,7 @@ wd_getdata_wwg <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   )
   attributes(res_tbl) <- c(attributes(res_tbl), attrb_lst)
 
-  ## Prepend class "wthr_df"
+  ## Prepend class "wthr_tbl"
   class(res_tbl) <- c("wthr_tbl", class(res_tbl))
 
   ## Return a tibble with columns: src, network, stid, dt, var, val, units

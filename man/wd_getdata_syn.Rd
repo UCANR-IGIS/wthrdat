@@ -40,7 +40,7 @@ wd_getdata_syn(
 
 \item{session}{Shiny session (for showing a spinner)}
 
-\item{spinner}{Show a spinner when fetching data,logical}
+\item{spinner}{Show a shinybusy spinner when fetching data, logical}
 
 \item{quiet}{Suppress messages}
 }
@@ -60,4 +60,7 @@ To cross-check data availability, visit: https://availability.synopticdata.com/s
 
 The Synoptic time series endpoint (https://docs.synopticdata.com/services/time-series) does not support temporal resampling,
 so the \code{per} argument is ignored.
+
+If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
+does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
 }

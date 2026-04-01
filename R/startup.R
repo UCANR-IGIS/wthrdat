@@ -1,4 +1,4 @@
-## Create an environment to use for caching smallish tables
+## Create an environment to use for caching smallish tables in memory (only)
 cache_env <- new.env()
 
 .onLoad <- function(lib, pkg) {

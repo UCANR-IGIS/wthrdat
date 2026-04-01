@@ -40,7 +40,7 @@ wd_getdata_wwg(
 
 \item{session}{Shiny session (for showing a spinner)}
 
-\item{spinner}{Show a spinner when fetching data,logical}
+\item{spinner}{Show a spinner when fetching data, logical}
 
 \item{quiet}{Suppress messages}
 }
@@ -55,4 +55,7 @@ This will query station data from the Weather Weather Group API.
 For the full documentation, see https://api.westernwx.com/docs/
 
 To use the WWG API, you must have an API key. If your account has API access, you can manage your API Keys from https://app.westernwx.com/apikeys. When you generate a new key, it will give you an Id, Secret, and a Key.
+
+If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
+does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
 }

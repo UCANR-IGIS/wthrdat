@@ -10,7 +10,7 @@
 #' @param tz Time Zone for the results
 #' @param cache_dir Directory for caching
 #' @param session Shiny session (for showing a spinner)
-#' @param spinner Show a spinner when fetching data,logical
+#' @param spinner Show a shinybusy spinner when fetching data, logical
 #' @param quiet Suppress messages
 #'
 #' @details
@@ -24,55 +24,52 @@
 #' The Synoptic time series endpoint (https://docs.synopticdata.com/services/time-series) does not support temporal resampling,
 #' so the `per` argument is ignored.
 #'
+#' If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
+#' does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
+#'
 #' @returns A weather data tibble (long format)
 #'
 #' @import httr2 tidyr dplyr tibble
 #' @importFrom lubridate with_tz ymd_hms
 #' @importFrom units set_units
-#' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li
+#' @importFrom cli cli_abort cli_alert_warning cli_alert_info cli_alert_success cli_progress_done cli_progress_step cli_li qty
 #' @importFrom purrr modify_if list_rbind
-#' @importFrom rlang set_names
+#' @importFrom rlang set_names local_options
 #' @export
 
 wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units = NULL, tz = Sys.timezone(),
                            cache_dir = NULL, session = NULL, spinner = FALSE, quiet = FALSE) {
 
-  # per is ignored with Synoptic (which doesn't support temporal resampling)
-  # cli_alert_info("TODO: error check the station names are valid")
-
-  if (!inherits(start_dt, "POSIXct")) cli_abort("{.var start_dt} must be a POSIXct object")
-  if (!inherits(end_dt, "POSIXct")) cli_abort("{.var end_dt} must be a POSIXct object")
-  if (start_dt >= end_dt) cli_abort("{.var end_dt} must be later than {.var start_dt}")
-  if (!tz %in% OlsonNames()) cli_abort("{tz} is not a recognized timezone.")
-  if (!is.null(units)) {
-    if (!tolower(units) %in% c("imperial", "metric")) {
-      cli_abort("{.var units} should be 'imperial' or 'metric'")
-    }
-  }
-  if (FALSE %in% (var %in% vars_tbl$var)) {
-    cli_abort("Unknown variable(s): {paste(var[!var %in% vars_tbl$var], collapse = '', '')}")
-  }
-
-  use_cache <- !is.null(cache_dir)
-  if (use_cache) {
-    if (!dir.exists(cache_dir)) cli_abort("Can't find {.var cache_dir}")
-  }
-
-  if (!is.null(session) && spinner) {
-    if (!requireNamespace("shinybusy")) cli_abort("{.pkg shinybusy} is required to display a spinner")
-  }
-
-  if (quiet) {
-    rlang::local_options(cli.default_handler = NULL)
-    options(cli.default_handler = NULL)
-  }
-
-  if (!is.null(per)) cli_alert_warning("{.var per} is not supported for Synoptic. Ignoring.")
-
   ## Initialize an object for the result
   src_chr <- "syn"
   src_name <- "Synoptic"
   syn_baseurl <- "https://api.synopticdata.com"
+
+  wd_getdata_checks(start_dt, end_dt, tz, src = src_chr, units, var, cache_dir, session, spinner)
+
+  # cat("GOT THRU ALL THE CHECKS (AGAIN) \n")
+
+  # per is ignored with Synoptic (which doesn't support temporal resampling)
+  # cli_alert_info("TODO: error check the station names are valid")
+
+  use_cache <- !is.null(cache_dir)
+
+  ## If quiet, suppress all cli output (except of course errors)
+  ## rlang::local_options will reset the handler when the function terminates
+  if (quiet) {
+    rlang::local_options(cli.default_handler = function(...) invisible(NULL))
+  }
+
+  ## Suppress ANSI escape codes from cli output if we're not in an interactive session
+  cat('THIS SESSION IS INTERACTIVE: ', interactive(), "\n", sep = "")
+  cat('SESSION IS NULL: ', is.null(session), "\n", sep = "")
+
+  cat("SETTING COLORS TO 1 \n")
+  rlang::local_options(cli.num_colors = 1L)
+
+  # if (!interactive()) {rlang::local_options(cli.num_colors = 1L)}
+
+  if (!is.null(per)) cli_alert_warning("{.var per} is not supported for Synoptic. Ignoring.")
 
   ## Construct a tibble that maps the standardized weather variable names to Synoptic API fields
   src_var_filt_tbl <- filter(src_var_tbl, var %in% .env$var, src == .env$src_chr)   ## not filtering on period
@@ -93,8 +90,11 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
     with_tz("UTC") |>
     format("%Y%m%d%H%M")
 
-  ## Get the Synoptic networks (n=375)
-  syn_networks_tbl <- wd_getnetworks_syn(key, quiet = FALSE, cache = TRUE)
+  ## Get the Synoptic networks (n=401)
+  syn_networks_tbl <- wd_getnetworks_syn(key, quiet = FALSE, cache = TRUE) |> try(silent = TRUE)
+  if (inherits(syn_networks_tbl, "try-error")) {
+    cli_abort(attr(syn_networks_tbl, "condition")$message)
+  }
 
   if (use_cache) {
     cache_base <- paste("wd_syn",
@@ -139,16 +139,27 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
                     obtimezone = 'local')
 
     ## Perform the request
-    cli_progress_step("Downloading weather data from Synoptic")
-    syn_data_resp <- req_perform(syn_data_req)
+    cli_progress_step("Calling {src_name} API")
+    syn_data_resp <- req_perform(syn_data_req) |> try(silent = TRUE)
 
+    ## Close the spinner
     if (!is.null(session) && spinner) {
       shinybusy::remove_modal_spinner(session = session)
     }
 
+    ## Trap authorization errors
+    if (inherits(syn_data_resp, "try-error")) {
+      err_msg <- attr(syn_data_resp, "condition")$message
+      if (grepl("unauthorized", err_msg, ignore.case = TRUE)) {
+        cli_abort("Invalid API key passed to {src_name}")
+      } else {
+        cli_abort("Error from {src_name}: {err_msg}")
+      }
+    }
+
     ## Check that we have a valid response
     if (resp_is_error(syn_data_resp)) {
-      cli_abort("The API request was not successful")
+      cli_abort("The API call to {src_name} returned an error")
     } else {
       cli_progress_done()
     }
@@ -162,7 +173,9 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
     ## list that gets returned (error = TRUE, err_msg = "")
     ## TODO: improve the error message showing the name of the station(s) not found
     if (syn_data_lst$SUMMARY$NUMBER_OF_OBJECTS != length(stid)) {
-      cli_abort(c("A station was not found"))
+      stids_returned_chr <- sapply(syn_data_lst$STATION, function(x) x$STID)
+      missing_stations_chr <- setdiff(stid, stids_returned_chr)
+      cli_abort(c("No data returned for {src_name} {qty(missing_stations_chr)}station{?s} {.field {missing_stations_chr}}"))
     }
 
     ## TODO: verify we got all the vars/fields we asked for
@@ -293,7 +306,7 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
   )
   attributes(res_tbl) <- c(attributes(res_tbl), attrb_lst)
 
-  ## Prepend class "wthr_df"
+  ## Prepend class "wthr_tbl"
   class(res_tbl) <- c("wthr_tbl", class(res_tbl))
 
   ## Return a tibble with columns: src, network, stid, dt, var, val, units
@@ -323,11 +336,25 @@ wd_getnetworks_syn <- function(key, cache = TRUE, quiet = FALSE) {
       req_url_path_append("v2/networks") |>
       req_url_query(token = key)
 
-    syn_networks_lst <- syn_networks_req |>
-      req_perform() |>
-      resp_body_json()
+    syn_networks_resp <- req_perform(syn_networks_req) |> try(silent = TRUE)
 
-    ## Additional variable available: PROGRAM, LAST_OBSERVATION, REPORTING_STATIONS, PERCENT_ACTIVE, PERCENTAGE_REPORTING, ACTIVE_RESTRICTED, TOTAL_RESTRICTED
+    ## Trap authorization errors
+    if (inherits(syn_networks_resp, "try-error")) {
+      err_msg <- attr(syn_networks_resp, "condition")$message
+      if (grepl("unauthorized", err_msg, ignore.case = TRUE)) {
+        cli_abort("Invalid Synoptic API key")
+      } else {
+        cli_abort("Error from {src_name}: {err_msg}")
+      }
+    }
+
+    ## Parse the body
+    syn_networks_lst <- resp_body_json(syn_networks_resp)
+
+    ## Additional variable available that we are *not* keeping:
+    ## PROGRAM, LAST_OBSERVATION, REPORTING_STATIONS, PERCENT_ACTIVE,
+    ## PERCENTAGE_REPORTING, ACTIVE_RESTRICTED, TOTAL_RESTRICTED
+
     syn_networks_tbl <- tibble(netwrk = syn_networks_lst$MNET) |>
       hoist(netwrk,
             id = "ID",
@@ -335,7 +362,7 @@ wd_getnetworks_syn <- function(key, cache = TRUE, quiet = FALSE) {
             longname = "LONGNAME",
             category = "CATEGORY",
             active_stations = "ACTIVE_STATIONS",
-            total_statins = "TOTAL_STATIONS",
+            total_stations = "TOTAL_STATIONS",
             period_checked = "PERIOD_CHECKED") |>
       select(-netwrk)
 

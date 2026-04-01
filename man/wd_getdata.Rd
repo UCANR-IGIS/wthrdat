@@ -39,7 +39,7 @@ wd_getdata(
 
 \item{tz}{Time Zone for the results}
 
-\item{cache_dir}{Directory for caching}
+\item{cache_dir}{A local directory for caching the results (optional)}
 
 \item{session}{Shiny session (for showing a spinner)}
 
@@ -54,9 +54,11 @@ A weather data tibble (long format)
 Download weather station data
 }
 \details{
-This will query station data from different APIs.
+This will query station data from supported networks.
+
+If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
+does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
 }
 \seealso{
 \code{\link{wd_getdata_syn}}, \code{\link{wd_getdata_wwg}}
-#'
 }
