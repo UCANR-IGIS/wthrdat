@@ -21,4 +21,4 @@ vignettes/*.pdf
 po/*~
 .secrets
 rsconnect
-docs
+
