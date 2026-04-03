@@ -175,7 +175,7 @@ wd_getdata_syn <- function(stid, start_dt, end_dt, var, key, per = NULL, units =
     if (syn_data_lst$SUMMARY$NUMBER_OF_OBJECTS != length(stid)) {
       stids_returned_chr <- sapply(syn_data_lst$STATION, function(x) x$STID)
       missing_stations_chr <- setdiff(stid, stids_returned_chr)
-      cli_abort(c("No data returned for {src_name} {qty(missing_stations_chr)}station{?s} {.field {missing_stations_chr}}"))
+      cli_abort(c("No data returned from {src_name} for {qty(missing_stations_chr)}station{?s} {.field {missing_stations_chr}}"))
     }
 
     ## TODO: verify we got all the vars/fields we asked for

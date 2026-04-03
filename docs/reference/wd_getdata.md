@@ -82,7 +82,7 @@ A weather data tibble (long format)
 
 ## Details
 
-This will query station data from supported networks.
+This will query station data from supported APIs.
 
 If you pass a value for `cache_dir`, downloaded data will be saved in
 that location. The function however does not clear the `cache_dir` upon
@@ -90,5 +90,5 @@ closing, so it is recommended you use a temporary directory.
 
 ## See also
 
-[`wd_getdata_syn`](wd_getdata_syn.md),
-[`wd_getdata_wwg`](wd_getdata_wwg.md)
+[`wd_getdata_syn`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata_syn.md),
+[`wd_getdata_wwg`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata_wwg.md)

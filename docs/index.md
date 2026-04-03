@@ -33,7 +33,7 @@ View the weather providers supported:
 
 ``` r
 library(wthrdat)
-#> wthrdat (version 0.1.9)
+#> wthrdat (version 0.2.0)
 #> Bug reports: https://github.com/ucanr-igis/wthrdat/issues/
 wd_srcs()
 #> # A tibble: 2 × 3
@@ -71,8 +71,9 @@ start_dt <- lubridate::ymd_hm("2025-04-01 00:00", tz = "America/Los_Angeles")
 end_dt <- lubridate::ymd_hm("2025-04-30 23:59", tz = "America/Los_Angeles")
 ```
 
-Next we call [`wd_getdata_syn()`](reference/wd_getdata_syn.md) which
-returns data in a long format:
+Next we call
+[`wd_getdata_syn()`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata_syn.md)
+which returns data in a long format:
 
 ``` r
 ## Retrieve my API key (saved as an environment variable - see below)
@@ -85,21 +86,24 @@ camarillo_tbl <- wd_getdata(src = "syn",
                             var = weather_vars,
                             key = syn_key,
                             units = "imperial")
+#> THIS SESSION IS INTERACTIVE: FALSE
+#> SESSION IS NULL: TRUE
+#> SETTING COLORS TO 1
 #> ✔ Downloaded networks from Synoptic
-#> ℹ Calling Synoptic API✔ Calling Synoptic API [94ms]
+#> ℹ Calling Synoptic API✔ Calling Synoptic API [90ms]
 #> ✔ Parsed data for station CI152
 dim(camarillo_tbl)
-#> [1] 2115    7
+#> [1] 1968    7
 head(camarillo_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                  var     val units
 #>   <fct> <fct>   <fct> <dttm>              <fct> <dbl> <fct>
-#> 1 syn   CIMIS   CI152 2025-04-01 12:00:00 tair   62.5 degF 
-#> 2 syn   CIMIS   CI152 2025-04-01 13:00:00 tair   63.0 degF 
-#> 3 syn   CIMIS   CI152 2025-04-01 14:00:00 tair   62.4 degF 
-#> 4 syn   CIMIS   CI152 2025-04-01 15:00:00 tair   61.5 degF 
-#> 5 syn   CIMIS   CI152 2025-04-01 16:00:00 tair   60.2 degF 
-#> 6 syn   CIMIS   CI152 2025-04-01 17:00:00 tair   58.3 degF
+#> 1 syn   CIMIS   CI152 2025-04-03 13:00:00 tair   62.7 degF 
+#> 2 syn   CIMIS   CI152 2025-04-03 14:00:00 tair   61.2 degF 
+#> 3 syn   CIMIS   CI152 2025-04-03 15:00:00 tair   60.4 degF 
+#> 4 syn   CIMIS   CI152 2025-04-03 16:00:00 tair   60.3 degF 
+#> 5 syn   CIMIS   CI152 2025-04-03 17:00:00 tair   59.2 degF 
+#> 6 syn   CIMIS   CI152 2025-04-03 18:00:00 tair   58.6 degF
 ```
 
 To work with the variables in individual columns, we need to transform
@@ -111,12 +115,12 @@ head(camarillo_wide_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                    tair   pr  eto
 #>   <fct> <fct>   <fct> <dttm>              [degF] [in] [in]
-#> 1 syn   CIMIS   CI152 2025-04-01 12:00:00   62.5    0 0.02
-#> 2 syn   CIMIS   CI152 2025-04-01 13:00:00   63.0    0 0.02
-#> 3 syn   CIMIS   CI152 2025-04-01 14:00:00   62.4    0 0.02
-#> 4 syn   CIMIS   CI152 2025-04-01 15:00:00   61.5    0 0.02
-#> 5 syn   CIMIS   CI152 2025-04-01 16:00:00   60.2    0 0.01
-#> 6 syn   CIMIS   CI152 2025-04-01 17:00:00   58.3    0 0
+#> 1 syn   CIMIS   CI152 2025-04-03 13:00:00   62.7    0 0.02
+#> 2 syn   CIMIS   CI152 2025-04-03 14:00:00   61.2    0 0.02
+#> 3 syn   CIMIS   CI152 2025-04-03 15:00:00   60.4    0 0.02
+#> 4 syn   CIMIS   CI152 2025-04-03 16:00:00   60.3    0 0.01
+#> 5 syn   CIMIS   CI152 2025-04-03 17:00:00   59.2    0 0   
+#> 6 syn   CIMIS   CI152 2025-04-03 18:00:00   58.6    0 0
 ```
 
 ## Some Notes on Querying Data
@@ -138,7 +142,9 @@ operate their own network of weather stations but are rather a data
 portal for multiple networks.
 
 To view a list of the standardized weather variables (that you can pass
-to [`wd_getdata()`](reference/wd_getdata.md)), run:
+to
+[`wd_getdata()`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata.md)),
+run:
 
 ``` r
 wd_vars()
@@ -174,12 +180,13 @@ we can try to add it.
 
 You can ask for imperial (English) or metric units when you download
 data using the `units` argument in
-[`wd_getdata()`](reference/wd_getdata.md). The units for each value are
-given in a separate column.
+[`wd_getdata()`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata.md).
+The units for each value are given in a separate column.
 
-[`wd_long2wide()`](reference/wd_long2wide.md) will make each variable
-into its own column, formatted as a vector from the units package. This
-makes converting to other units really easy (show example).
+[`wd_long2wide()`](https://ucanr-igis.github.io/wthrdat/reference/wd_long2wide.md)
+will make each variable into its own column, formatted as a vector from
+the units package. This makes converting to other units really easy
+(show example).
 
 ``` R
 ## Example of converting to other units
@@ -250,13 +257,15 @@ There are a dozen ways that an API call can fail. The API may be
 offline, a station may be offline, the API key might be expired,
 expected parameter values may have changed, etc.
 
-When an error occurs in [`wd_getdata()`](reference/wd_getdata.md) (and
-its dependent functions), it checks for the most common causes and tries
-to provide a helpful error message. If you’re working at the console or
-in a notebook, these error message will hopefully help you understand
-and come up with a way to fix the error.
+When an error occurs in
+[`wd_getdata()`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata.md)
+(and its dependent functions), it checks for the most common causes and
+tries to provide a helpful error message. If you’re working at the
+console or in a notebook, these error message will hopefully help you
+understand and come up with a way to fix the error.
 
-If on the other you’re calling [`wd_getdata()`](reference/wd_getdata.md)
+If on the other you’re calling
+[`wd_getdata()`](https://ucanr-igis.github.io/wthrdat/reference/wd_getdata.md)
 from a Shiny app (one of the main use cases for the package), you
 probably want to check for an error response so you can respond to it
 without having the app simply disconnect from the server. You can trap

@@ -38,7 +38,7 @@ View the weather providers supported:
 
 ``` r
 library(wthrdat)
-#> wthrdat (version 0.1.9)
+#> wthrdat (version 0.2.0)
 #> Bug reports: https://github.com/ucanr-igis/wthrdat/issues/
 wd_srcs()
 #> # A tibble: 2 × 3
@@ -95,20 +95,20 @@ camarillo_tbl <- wd_getdata(src = "syn",
 #> SESSION IS NULL: TRUE
 #> SETTING COLORS TO 1
 #> ✔ Downloaded networks from Synoptic
-#> ℹ Calling Synoptic API✔ Calling Synoptic API [85ms]
+#> ℹ Calling Synoptic API✔ Calling Synoptic API [90ms]
 #> ✔ Parsed data for station CI152
 dim(camarillo_tbl)
-#> [1] 2106    7
+#> [1] 1968    7
 head(camarillo_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                  var     val units
 #>   <fct> <fct>   <fct> <dttm>              <fct> <dbl> <fct>
-#> 1 syn   CIMIS   CI152 2025-04-01 15:00:00 tair   61.5 degF 
-#> 2 syn   CIMIS   CI152 2025-04-01 16:00:00 tair   60.2 degF 
-#> 3 syn   CIMIS   CI152 2025-04-01 17:00:00 tair   58.3 degF 
-#> 4 syn   CIMIS   CI152 2025-04-01 18:00:00 tair   57.1 degF 
-#> 5 syn   CIMIS   CI152 2025-04-01 19:00:00 tair   56.2 degF 
-#> 6 syn   CIMIS   CI152 2025-04-01 20:00:00 tair   55.4 degF
+#> 1 syn   CIMIS   CI152 2025-04-03 13:00:00 tair   62.7 degF 
+#> 2 syn   CIMIS   CI152 2025-04-03 14:00:00 tair   61.2 degF 
+#> 3 syn   CIMIS   CI152 2025-04-03 15:00:00 tair   60.4 degF 
+#> 4 syn   CIMIS   CI152 2025-04-03 16:00:00 tair   60.3 degF 
+#> 5 syn   CIMIS   CI152 2025-04-03 17:00:00 tair   59.2 degF 
+#> 6 syn   CIMIS   CI152 2025-04-03 18:00:00 tair   58.6 degF
 ```
 
 To work with the variables in individual columns, we need to transform
@@ -120,12 +120,12 @@ head(camarillo_wide_tbl)
 #> # A tibble: 6 × 7
 #>   src   network stid  dt                    tair   pr  eto
 #>   <fct> <fct>   <fct> <dttm>              [degF] [in] [in]
-#> 1 syn   CIMIS   CI152 2025-04-01 15:00:00   61.5    0 0.02
-#> 2 syn   CIMIS   CI152 2025-04-01 16:00:00   60.2    0 0.01
-#> 3 syn   CIMIS   CI152 2025-04-01 17:00:00   58.3    0 0   
-#> 4 syn   CIMIS   CI152 2025-04-01 18:00:00   57.1    0 0   
-#> 5 syn   CIMIS   CI152 2025-04-01 19:00:00   56.2    0 0   
-#> 6 syn   CIMIS   CI152 2025-04-01 20:00:00   55.4    0 0
+#> 1 syn   CIMIS   CI152 2025-04-03 13:00:00   62.7    0 0.02
+#> 2 syn   CIMIS   CI152 2025-04-03 14:00:00   61.2    0 0.02
+#> 3 syn   CIMIS   CI152 2025-04-03 15:00:00   60.4    0 0.02
+#> 4 syn   CIMIS   CI152 2025-04-03 16:00:00   60.3    0 0.01
+#> 5 syn   CIMIS   CI152 2025-04-03 17:00:00   59.2    0 0   
+#> 6 syn   CIMIS   CI152 2025-04-03 18:00:00   58.6    0 0
 ```
 
 ## Some Notes on Querying Data

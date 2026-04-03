@@ -1,7 +1,7 @@
 Package: wthrdat
 Title: Import Weather Station Data from APIs
-Version: 0.1.9
-Date: 2026-03-31
+Version: 0.2.0
+Date: 2026-04-03
 Authors@R: c(
     person("Andy", "Lyons", , "andlyons@ucanr.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7505-6709")),
@@ -10,7 +10,7 @@ Authors@R: c(
 Description: Provides a standardized set of functions to retrieve data
     from weather station networks.
 License: MIT + file LICENSE
-URL: https://github.com/ucanr-igis/wthrdat/
+URL: https://ucanr-igis.github.io/wthrdat/, https://github.com/ucanr-igis/wthrdat/
 BugReports: https://github.com/ucanr-igis/wthrdat/issues/
 Depends: 
     R (>= 4.1.0)

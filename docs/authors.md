@@ -13,12 +13,12 @@ Source:
 [`DESCRIPTION`](https://github.com/ucanr-igis/wthrdat/blob/HEAD/DESCRIPTION)
 
 Lyons A (2026). *wthrdat: Import Weather Station Data from APIs*. R
-package version 0.1.9, <https://github.com/ucanr-igis/wthrdat/>.
+package version 0.2.0, <https://ucanr-igis.github.io/wthrdat/>.
 
     @Manual{,
       title = {wthrdat: Import Weather Station Data from APIs},
       author = {Andy Lyons},
       year = {2026},
-      note = {R package version 0.1.9},
-      url = {https://github.com/ucanr-igis/wthrdat/},
+      note = {R package version 0.2.0},
+      url = {https://ucanr-igis.github.io/wthrdat/},
     }

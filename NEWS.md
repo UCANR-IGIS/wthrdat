@@ -1,3 +1,7 @@
+# Changes in version 0.2.0 (2026-04-03)
+
+* small modification to error message returned by `wd_getdata_syn()` when no data is returned
+
 # Changes in version 0.1.9 (2026-03-31)
 
 * improved error messages returned by `wd_getdata_syn()` and `wd_getdata_wwg()`

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">wthrdat</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@
 <p>View the weather providers supported:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ucanr-igis/wthrdat/" class="external-link">wthrdat</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; wthrdat (version 0.1.9)</span></span>
+<span><span class="co">#&gt; wthrdat (version 0.2.0)</span></span>
 <span><span class="co">#&gt; Bug reports: https://github.com/ucanr-igis/wthrdat/issues/</span></span>
 <span><span class="fu"><a href="reference/wd_srcs.html">wd_srcs</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
@@ -105,21 +105,24 @@
 <span>                            var <span class="op">=</span> <span class="va">weather_vars</span>,</span>
 <span>                            key <span class="op">=</span> <span class="va">syn_key</span>,</span>
 <span>                            units <span class="op">=</span> <span class="st">"imperial"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; THIS SESSION IS INTERACTIVE: FALSE</span></span>
+<span><span class="co">#&gt; SESSION IS NULL: TRUE</span></span>
+<span><span class="co">#&gt; SETTING COLORS TO 1</span></span>
 <span><span class="co">#&gt; ✔ Downloaded networks from Synoptic</span></span>
-<span><span class="co">#&gt; ℹ Calling Synoptic API✔ Calling Synoptic API [94ms]</span></span>
+<span><span class="co">#&gt; ℹ Calling Synoptic API✔ Calling Synoptic API [90ms]</span></span>
 <span><span class="co">#&gt; ✔ Parsed data for station CI152</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">camarillo_tbl</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2115    7</span></span>
+<span><span class="co">#&gt; [1] 1968    7</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">camarillo_tbl</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 6 × 7</span></span>
 <span><span class="co">#&gt;   src   network stid  dt                  var     val units</span></span>
 <span><span class="co">#&gt;   &lt;fct&gt; &lt;fct&gt;   &lt;fct&gt; &lt;dttm&gt;              &lt;fct&gt; &lt;dbl&gt; &lt;fct&gt;</span></span>
-<span><span class="co">#&gt; 1 syn   CIMIS   CI152 2025-04-01 12:00:00 tair   62.5 degF </span></span>
-<span><span class="co">#&gt; 2 syn   CIMIS   CI152 2025-04-01 13:00:00 tair   63.0 degF </span></span>
-<span><span class="co">#&gt; 3 syn   CIMIS   CI152 2025-04-01 14:00:00 tair   62.4 degF </span></span>
-<span><span class="co">#&gt; 4 syn   CIMIS   CI152 2025-04-01 15:00:00 tair   61.5 degF </span></span>
-<span><span class="co">#&gt; 5 syn   CIMIS   CI152 2025-04-01 16:00:00 tair   60.2 degF </span></span>
-<span><span class="co">#&gt; 6 syn   CIMIS   CI152 2025-04-01 17:00:00 tair   58.3 degF</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 syn   CIMIS   CI152 2025-04-03 13:00:00 tair   62.7 degF </span></span>
+<span><span class="co">#&gt; 2 syn   CIMIS   CI152 2025-04-03 14:00:00 tair   61.2 degF </span></span>
+<span><span class="co">#&gt; 3 syn   CIMIS   CI152 2025-04-03 15:00:00 tair   60.4 degF </span></span>
+<span><span class="co">#&gt; 4 syn   CIMIS   CI152 2025-04-03 16:00:00 tair   60.3 degF </span></span>
+<span><span class="co">#&gt; 5 syn   CIMIS   CI152 2025-04-03 17:00:00 tair   59.2 degF </span></span>
+<span><span class="co">#&gt; 6 syn   CIMIS   CI152 2025-04-03 18:00:00 tair   58.6 degF</span></span></code></pre></div>
 <p>To work with the variables in individual columns, we need to transform it to a wide format:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">camarillo_wide_tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/wd_long2wide.html">wd_long2wide</a></span><span class="op">(</span><span class="va">camarillo_tbl</span>, use_units <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -127,12 +130,12 @@
 <span><span class="co">#&gt; # A tibble: 6 × 7</span></span>
 <span><span class="co">#&gt;   src   network stid  dt                    tair   pr  eto</span></span>
 <span><span class="co">#&gt;   &lt;fct&gt; &lt;fct&gt;   &lt;fct&gt; &lt;dttm&gt;              [degF] [in] [in]</span></span>
-<span><span class="co">#&gt; 1 syn   CIMIS   CI152 2025-04-01 12:00:00   62.5    0 0.02</span></span>
-<span><span class="co">#&gt; 2 syn   CIMIS   CI152 2025-04-01 13:00:00   63.0    0 0.02</span></span>
-<span><span class="co">#&gt; 3 syn   CIMIS   CI152 2025-04-01 14:00:00   62.4    0 0.02</span></span>
-<span><span class="co">#&gt; 4 syn   CIMIS   CI152 2025-04-01 15:00:00   61.5    0 0.02</span></span>
-<span><span class="co">#&gt; 5 syn   CIMIS   CI152 2025-04-01 16:00:00   60.2    0 0.01</span></span>
-<span><span class="co">#&gt; 6 syn   CIMIS   CI152 2025-04-01 17:00:00   58.3    0 0</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 syn   CIMIS   CI152 2025-04-03 13:00:00   62.7    0 0.02</span></span>
+<span><span class="co">#&gt; 2 syn   CIMIS   CI152 2025-04-03 14:00:00   61.2    0 0.02</span></span>
+<span><span class="co">#&gt; 3 syn   CIMIS   CI152 2025-04-03 15:00:00   60.4    0 0.02</span></span>
+<span><span class="co">#&gt; 4 syn   CIMIS   CI152 2025-04-03 16:00:00   60.3    0 0.01</span></span>
+<span><span class="co">#&gt; 5 syn   CIMIS   CI152 2025-04-03 17:00:00   59.2    0 0   </span></span>
+<span><span class="co">#&gt; 6 syn   CIMIS   CI152 2025-04-03 18:00:00   58.6    0 0</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="some-notes-on-querying-data">Some Notes on Querying Data<a class="anchor" aria-label="anchor" href="#some-notes-on-querying-data"></a>

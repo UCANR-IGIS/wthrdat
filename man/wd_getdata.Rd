@@ -54,7 +54,7 @@ A weather data tibble (long format)
 Download weather station data
 }
 \details{
-This will query station data from supported networks.
+This will query station data from supported APIs.
 
 If you pass a value for \code{cache_dir}, downloaded data will be saved in that location. The function however
 does not clear the \code{cache_dir} upon closing, so it is recommended you use a temporary directory.
